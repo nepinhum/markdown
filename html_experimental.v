@@ -78,14 +78,10 @@ fn tos_attribute(attr &C.MD_ATTRIBUTE, mut wr strings.Builder) {
 				wr.write_string(html.unescape('&#0'))
 			}
 			.md_text_entity {
-				if text == '&lt;' || text == '&gt;' {
-					wr.write_string(text)
-				} else {
-					wr.write_string(html.unescape(text, all: true))
-				}
+				wr.write_string(html.unescape(text, all: true))
 			}
 			else {
-				wr.write_string(html.escape(text))
+				wr.write_string(text)
 			}
 		}
 	}
@@ -373,15 +369,13 @@ fn (mut ht HtmlRenderer) text(typ MD_TEXTTYPE, text string) ? {
 			ht.writer.write_string('&#0')
 		}
 		.md_text_softbr {
-			if ht.image_nesting_level > 0 {
-				ht.writer.write_byte(` `)
-			}
+			ht.writer.write_byte(if ht.image_nesting_level > 0 { ` ` } else { `\n` })
 		}
 		.md_text_br {
-			ht.writer.write_string('<br />')
+			ht.writer.write_string(if ht.image_nesting_level > 0 { ' ' } else { '<br />' })
 		}
 		.md_text_entity {
-			ht.writer.write_string(html.unescape(text, all: true))
+			ht.write_escaped(html.unescape(text, all: true))
 		}
 		.md_text_html {
 			ht.writer.write_string(text)
@@ -396,9 +390,15 @@ fn (mut ht HtmlRenderer) text(typ MD_TEXTTYPE, text string) ? {
 					}
 				}
 			}
-			ht.writer.write_string(html.escape(text, quote: false))
+			ht.write_escaped(text)
 		}
 	}
+}
+
+// Text inside an image is written into its alt attribute, where quotes
+// must be escaped too.
+fn (mut ht HtmlRenderer) write_escaped(text string) {
+	ht.writer.write_string(html.escape(text, quote: ht.image_nesting_level > 0))
 }
 
 fn (mut ht HtmlRenderer) debug_log(msg string) {

@@ -245,3 +245,27 @@ fn test_content_transformer() ! {
 	out := markdown.render('```go\ntrue\n```', mut renderer)!
 	assert out == '<pre><code class="language-go"><span class="keyword">language: go >>> true\n</span></code></pre>'
 }
+
+fn test_render_escaped_entities_stay_escaped() {
+	assert markdown.to_html_experimental('&lt;script&gt;alert(1)&lt;/script&gt;') == '<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>'
+}
+
+fn test_img_alt_quotes_are_escaped() {
+	assert markdown.to_html_experimental('![a"onerror="alert(1)](x.png)') == '<p><img src="x.png" alt="a&#34;onerror=&#34;alert(1)" /></p>'
+	assert markdown.to_html_experimental('![&quot;x](x.png)') == '<p><img src="x.png" alt="&#34;x" /></p>'
+}
+
+fn test_attributes_are_escaped_once() {
+	assert markdown.to_html_experimental('[x](http://a.com/?a=1&b=2)') == '<p><a href="http://a.com/?a=1&amp;b=2">x</a></p>'
+	assert markdown.to_html_experimental('[x](/?q=&lt;)') == '<p><a href="/?q=&lt;">x</a></p>'
+	assert markdown.to_html_experimental('[x](u "a &quot;b&quot;")') == '<p><a href="u" title="a &#34;b&#34;">x</a></p>'
+}
+
+fn test_render_soft_break() {
+	assert markdown.to_html_experimental('hello\nworld') == '<p>hello\nworld</p>'
+}
+
+fn test_img_alt_line_breaks() {
+	assert markdown.to_html_experimental('![a\nb](x.png)') == '<p><img src="x.png" alt="a b" /></p>'
+	assert markdown.to_html_experimental('![a\\\nb](x.png)') == '<p><img src="x.png" alt="a b" /></p>'
+}
