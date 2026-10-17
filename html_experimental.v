@@ -378,7 +378,11 @@ fn (mut ht HtmlRenderer) text(typ MD_TEXTTYPE, text string) ? {
 			ht.write_escaped(html.unescape(text, all: true))
 		}
 		.md_text_html {
-			ht.writer.write_string(text)
+			if ht.image_nesting_level > 0 {
+				ht.write_escaped(text)
+			} else {
+				ht.writer.write_string(text)
+			}
 		}
 		else {
 			if ht.image_nesting_level == 0 {
